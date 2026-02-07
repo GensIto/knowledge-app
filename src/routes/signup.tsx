@@ -73,6 +73,7 @@ function SignUpPage() {
                   onBlur={field.handleBlur}
                   placeholder='山田太郎'
                   disabled={form.state.isSubmitting}
+                  className='text-white'
                 />
                 {field.state.meta.errors.length > 0 && (
                   <p className='mt-1 text-sm text-red-400'>
@@ -96,6 +97,7 @@ function SignUpPage() {
                   onBlur={field.handleBlur}
                   placeholder='example@email.com'
                   disabled={form.state.isSubmitting}
+                  className='text-white'
                 />
                 {field.state.meta.errors.length > 0 && (
                   <p className='mt-1 text-sm text-red-400'>
@@ -119,6 +121,7 @@ function SignUpPage() {
                   onBlur={field.handleBlur}
                   placeholder='••••••••'
                   disabled={form.state.isSubmitting}
+                  className='text-white'
                 />
                 {field.state.meta.errors.length > 0 && (
                   <p className='mt-1 text-sm text-red-400'>
