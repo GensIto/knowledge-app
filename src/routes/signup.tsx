@@ -1,8 +1,11 @@
-import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { signUp } from "@/lib/auth-client";
 import { signUpSchema } from "@/shared/schema/signUpSchema";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
@@ -10,7 +13,6 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
-  const [generalError, setGeneralError] = useState("");
 
   const form = useForm({
     defaultValues: {
@@ -22,8 +24,6 @@ function SignUpPage() {
       onSubmit: signUpSchema,
     },
     onSubmit: async ({ value }) => {
-      setGeneralError("");
-
       try {
         await signUp.email({
           email: value.email,
@@ -32,17 +32,9 @@ function SignUpPage() {
         });
 
         navigate({ to: "/" });
+        toast.success("アカウントを作成しました");
       } catch (error) {
-        console.error("Sign up error:", error);
-
-        if (error instanceof Error) {
-          setGeneralError(
-            error.message ||
-              "アカウントの作成に失敗しました。もう一度お試しください。",
-          );
-        } else {
-          setGeneralError("予期しないエラーが発生しました。");
-        }
+        toast.error("アカウントの作成に失敗しました。もう一度お試しください。");
       }
     },
   });
@@ -60,12 +52,6 @@ function SignUpPage() {
           アカウント作成
         </h1>
 
-        {generalError && (
-          <div className='mb-4 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-sm'>
-            {generalError}
-          </div>
-        )}
-
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -77,24 +63,14 @@ function SignUpPage() {
           <form.Field name='name'>
             {(field) => (
               <div>
-                <label
-                  htmlFor='name'
-                  className='block text-sm font-medium text-zinc-300 mb-2'
-                >
-                  名前
-                </label>
-                <input
+                <Label htmlFor='name'>名前</Label>
+                <Input
                   type='text'
                   id='name'
                   name='name'
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  className={`w-full px-4 py-3 rounded-lg bg-zinc-900/50 border ${
-                    field.state.meta.errors.length > 0
-                      ? "border-red-500"
-                      : "border-zinc-700"
-                  } text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   placeholder='山田太郎'
                   disabled={form.state.isSubmitting}
                 />
@@ -110,24 +86,14 @@ function SignUpPage() {
           <form.Field name='email'>
             {(field) => (
               <div>
-                <label
-                  htmlFor='email'
-                  className='block text-sm font-medium text-zinc-300 mb-2'
-                >
-                  メールアドレス
-                </label>
-                <input
+                <Label htmlFor='email'>メールアドレス</Label>
+                <Input
                   type='email'
                   id='email'
                   name='email'
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  className={`w-full px-4 py-3 rounded-lg bg-zinc-900/50 border ${
-                    field.state.meta.errors.length > 0
-                      ? "border-red-500"
-                      : "border-zinc-700"
-                  } text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   placeholder='example@email.com'
                   disabled={form.state.isSubmitting}
                 />
@@ -143,24 +109,14 @@ function SignUpPage() {
           <form.Field name='password'>
             {(field) => (
               <div>
-                <label
-                  htmlFor='password'
-                  className='block text-sm font-medium text-zinc-300 mb-2'
-                >
-                  パスワード
-                </label>
-                <input
+                <Label htmlFor='password'>パスワード</Label>
+                <Input
                   type='password'
                   id='password'
                   name='password'
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  className={`w-full px-4 py-3 rounded-lg bg-zinc-900/50 border ${
-                    field.state.meta.errors.length > 0
-                      ? "border-red-500"
-                      : "border-zinc-700"
-                  } text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   placeholder='••••••••'
                   disabled={form.state.isSubmitting}
                 />
@@ -176,13 +132,9 @@ function SignUpPage() {
             )}
           </form.Field>
 
-          <button
-            type='submit'
-            disabled={form.state.isSubmitting}
-            className='w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors'
-          >
+          <Button type='submit' disabled={form.state.isSubmitting}>
             {form.state.isSubmitting ? "作成中..." : "アカウントを作成"}
-          </button>
+          </Button>
         </form>
 
         <div className='mt-6 text-center text-sm text-zinc-400'>

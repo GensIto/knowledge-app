@@ -1,8 +1,11 @@
-import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { signIn } from "@/lib/auth-client";
 import { signInSchema } from "@/shared/schema/signInSchema";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/signin")({
   component: SignInPage,
@@ -10,7 +13,6 @@ export const Route = createFileRoute("/signin")({
 
 function SignInPage() {
   const navigate = useNavigate();
-  const [generalError, setGeneralError] = useState("");
 
   const form = useForm({
     defaultValues: {
@@ -21,8 +23,6 @@ function SignInPage() {
       onSubmit: signInSchema,
     },
     onSubmit: async ({ value }) => {
-      setGeneralError("");
-
       try {
         await signIn.email({
           email: value.email,
@@ -30,14 +30,9 @@ function SignInPage() {
         });
 
         navigate({ to: "/" });
+        toast.success("ログインしました");
       } catch (error) {
-        console.error("Sign in error:", error);
-
-        if (error instanceof Error) {
-          setGeneralError("メールアドレスまたはパスワードが正しくありません。");
-        } else {
-          setGeneralError("予期しないエラーが発生しました。");
-        }
+        toast.error("メールアドレスまたはパスワードが正しくありません。");
       }
     },
   });
@@ -54,13 +49,6 @@ function SignInPage() {
         <h1 className='text-3xl font-bold text-white mb-6 text-center'>
           ログイン
         </h1>
-
-        {generalError && (
-          <div className='mb-4 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-200 text-sm'>
-            {generalError}
-          </div>
-        )}
-
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -72,24 +60,14 @@ function SignInPage() {
           <form.Field name='email'>
             {(field) => (
               <div>
-                <label
-                  htmlFor='email'
-                  className='block text-sm font-medium text-zinc-300 mb-2'
-                >
-                  メールアドレス
-                </label>
-                <input
+                <Label htmlFor='email'>メールアドレス</Label>
+                <Input
                   type='email'
                   id='email'
                   name='email'
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  className={`w-full px-4 py-3 rounded-lg bg-zinc-900/50 border ${
-                    field.state.meta.errors.length > 0
-                      ? "border-red-500"
-                      : "border-zinc-700"
-                  } text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   placeholder='example@email.com'
                   disabled={form.state.isSubmitting}
                 />
@@ -105,24 +83,14 @@ function SignInPage() {
           <form.Field name='password'>
             {(field) => (
               <div>
-                <label
-                  htmlFor='password'
-                  className='block text-sm font-medium text-zinc-300 mb-2'
-                >
-                  パスワード
-                </label>
-                <input
+                <Label htmlFor='password'>パスワード</Label>
+                <Input
                   type='password'
                   id='password'
                   name='password'
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
-                  className={`w-full px-4 py-3 rounded-lg bg-zinc-900/50 border ${
-                    field.state.meta.errors.length > 0
-                      ? "border-red-500"
-                      : "border-zinc-700"
-                  } text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   placeholder='••••••••'
                   disabled={form.state.isSubmitting}
                 />
@@ -131,17 +99,16 @@ function SignInPage() {
                     {String(field.state.meta.errors[0])}
                   </p>
                 )}
+                <p className='mt-1 text-xs text-zinc-500'>
+                  8文字以上、大文字・小文字・数字を含める必要があります
+                </p>
               </div>
             )}
           </form.Field>
 
-          <button
-            type='submit'
-            disabled={form.state.isSubmitting}
-            className='w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors'
-          >
+          <Button type='submit' disabled={form.state.isSubmitting}>
             {form.state.isSubmitting ? "ログイン中..." : "ログイン"}
-          </button>
+          </Button>
         </form>
 
         <div className='mt-4 text-center text-sm text-zinc-400'>
