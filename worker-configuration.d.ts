@@ -12,6 +12,7 @@ declare namespace Cloudflare {
     CLOUDFLARE_ACCOUNT_ID: string;
     CLOUDFLARE_DATABASE_ID: string;
     CLOUDFLARE_D1_TOKEN: string;
+    CLOUDFLARE_BROWSER_RENDERING_TOKEN: string;
   }
 }
 interface Env extends Cloudflare.Env {}
