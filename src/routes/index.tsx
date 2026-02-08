@@ -40,12 +40,6 @@ function App() {
                   >
                     ログイン
                   </Link>
-                  <Link
-                    to='/signup'
-                    className='px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors'
-                  >
-                    サインアップ
-                  </Link>
                 </>
               )}
             </div>
