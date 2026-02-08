@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/d1";
 import * as dbSchema from "@/db/schema";
 import { CloudflareContentFetcher } from "@/server/infrastructure/gateway/cloudflare-content-fetcher";
 import { CloudflareAiSummarizer } from "@/server/infrastructure/gateway/cloudflare-ai-summarizer";
+import { CloudflareContentStorage } from "@/server/infrastructure/gateway/cloudflare-content-storage";
 import { DrizzleKnowledgeRepository } from "@/server/infrastructure/repository/knowledge-repository.impl";
 import { ExtractAndSaveUseCase } from "@/server/application/knowledge/commands/extract-and-save";
 import { ListKnowledgeUseCase } from "@/server/application/knowledge/queries/list-knowledge";
@@ -11,6 +12,7 @@ import {
   CONTENT_FETCHER_TOKEN,
   AI_SUMMARIZER_TOKEN,
   KNOWLEDGE_REPOSITORY_TOKEN,
+  CONTENT_STORAGE_TOKEN,
   EXTRACT_AND_SAVE_UC_TOKEN,
   LIST_KNOWLEDGE_UC_TOKEN,
   DELETE_KNOWLEDGE_UC_TOKEN,
@@ -43,6 +45,12 @@ export function createRequestContainer(env: Env) {
     { scope: "scoped" },
   );
 
+  container.bindFactory(
+    CONTENT_STORAGE_TOKEN,
+    () => new CloudflareContentStorage(env.BUCKET),
+    { scope: "scoped" },
+  );
+
   // Use case bindings
   container.bindFactory(
     EXTRACT_AND_SAVE_UC_TOKEN,
@@ -51,6 +59,7 @@ export function createRequestContainer(env: Env) {
         container.resolve(CONTENT_FETCHER_TOKEN),
         container.resolve(AI_SUMMARIZER_TOKEN),
         container.resolve(KNOWLEDGE_REPOSITORY_TOKEN),
+        container.resolve(CONTENT_STORAGE_TOKEN),
       ),
     { scope: "scoped" },
   );

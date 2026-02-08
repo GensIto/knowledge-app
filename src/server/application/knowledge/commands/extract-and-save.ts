@@ -1,5 +1,6 @@
 import type { ContentFetcher } from "@/server/domain/knowledge/ports/content-fetcher";
 import type { AiSummarizer } from "@/server/domain/knowledge/ports/ai-summarizer";
+import type { ContentStorage } from "@/server/domain/knowledge/ports/content-storage";
 import type { KnowledgeRepository } from "@/server/domain/knowledge/repositories/knowledge-repository";
 import { KnowledgeItem } from "@/server/domain/knowledge/entities/knowledge-item";
 import { extractTitle } from "@/server/domain/knowledge/services/content-extractor";
@@ -9,6 +10,7 @@ export class ExtractAndSaveUseCase {
     private readonly contentFetcher: ContentFetcher,
     private readonly aiSummarizer: AiSummarizer,
     private readonly knowledgeRepository: KnowledgeRepository,
+    private readonly contentStorage: ContentStorage,
   ) {}
 
   async execute(input: { url: string; userId: string }) {
@@ -28,6 +30,10 @@ export class ExtractAndSaveUseCase {
     });
 
     await this.knowledgeRepository.save(item);
+    await this.contentStorage.saveMarkdown(
+      `knowledge/${item.id}/content.md`,
+      markdown,
+    );
 
     return {
       id: item.id,
