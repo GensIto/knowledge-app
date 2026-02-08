@@ -10,7 +10,10 @@ export class CloudflareContentFetcher implements ContentFetcher {
   constructor(accountId: string, apiToken: string, logger: Logger) {
     this.accountId = accountId;
     this.client = new Cloudflare({ apiToken });
-    this.logger = logger.child({ layer: "infrastructure", component: "CloudflareContentFetcher" });
+    this.logger = logger.child({
+      layer: "infrastructure",
+      component: "CloudflareContentFetcher",
+    });
   }
 
   async fetchMarkdown(url: string) {
@@ -19,6 +22,8 @@ export class CloudflareContentFetcher implements ContentFetcher {
     const startTime = Date.now();
 
     try {
+      // https://developers.cloudflare.com/browser-rendering/workers-bindings/
+      // 複雑なインタラクションではない場合、SKD(REST)がシンプルな選択肢と記載されているのでBindingsを利用していない
       const markdown = await this.client.browserRendering.markdown.create({
         account_id: this.accountId,
         url,
@@ -44,7 +49,9 @@ export class CloudflareContentFetcher implements ContentFetcher {
         error: e instanceof Error ? e.message : String(e),
         stack: e instanceof Error ? e.stack : undefined,
       });
-      throw new Error(`コンテンツの取得に失敗しました: ${e instanceof Error ? e.message : String(e)}`);
+      throw new Error(
+        `コンテンツの取得に失敗しました: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
   }
 }
