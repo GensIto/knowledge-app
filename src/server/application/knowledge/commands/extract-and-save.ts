@@ -35,21 +35,29 @@ export class ExtractAndSaveUseCase {
     const startTime = Date.now();
 
     try {
-      // 1. Markdown取得
+      // 1. URL重複チェック(高コスト処理前に実施)
+      this.logger.debug("URL重複チェックステップ");
+      const existing = await this.knowledgeRepository.findByUrl(url, userId);
+      if (existing) {
+        this.logger.warn("URLが既に登録されています", { url, userId, existingId: existing.id });
+        throw new Error(`このURLは既に登録されています: ${url}`);
+      }
+
+      // 2. Markdown取得
       this.logger.debug("Markdown取得ステップ");
       const markdown = await this.contentFetcher.fetchMarkdown(url);
 
-      // 2. タイトル抽出
+      // 3. タイトル抽出
       this.logger.debug("タイトル抽出ステップ");
       const title = extractTitle(markdown, url);
       this.logger.debug("タイトル抽出完了", { title });
 
-      // 3. AI要約・タグ生成
+      // 4. AI要約・タグ生成
       this.logger.debug("AI要約・タグ生成ステップ");
       const { summary, tags } =
         await this.aiSummarizer.generateSummaryAndTags(markdown);
 
-      // 4. ドメインエンティティ作成
+      // 5. ドメインエンティティ作成
       const item = KnowledgeItem.create({
         userId,
         url,
@@ -60,14 +68,14 @@ export class ExtractAndSaveUseCase {
 
       this.logger.debug("KnowledgeItem作成完了", { itemId: item.id });
 
-      // 5. リポジトリ保存
+      // 6. リポジトリ保存
       this.logger.debug("リポジトリ保存ステップ");
       await this.knowledgeRepository.save(item);
 
-      // 6. コンテンツストレージ保存
+      // 7. コンテンツストレージ保存
       this.logger.debug("コンテンツストレージ保存ステップ");
       await this.contentStorage.saveMarkdown(
-        `knowledge/${item.id}/content.md`,
+        `${userId}/${item.id}.md`,
         markdown,
       );
 

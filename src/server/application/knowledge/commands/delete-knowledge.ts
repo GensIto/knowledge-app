@@ -23,10 +23,16 @@ export class DeleteKnowledgeUseCase {
     const startTime = Date.now();
 
     try {
+      // 削除前にアイテムを取得
+      const item = await this.knowledgeRepository.findById(id, userId);
+      if (!item || item.userId !== userId) {
+        throw new Error("Knowledge item not found or unauthorized");
+      }
+
       await this.knowledgeRepository.deleteById(id, userId);
       this.logger.debug("リポジトリから削除完了", { id, userId });
 
-      await this.contentStorage.deleteMarkdown(`knowledge/${id}/content.md`);
+      await this.contentStorage.deleteMarkdown(`${userId}/${item.id}.md`);
       this.logger.debug("ストレージから削除完了", { id });
 
       const duration = Date.now() - startTime;

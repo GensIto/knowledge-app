@@ -109,6 +109,60 @@ export class DrizzleKnowledgeRepository implements KnowledgeRepository {
     }
   }
 
+  async findByUrl(url: string, userId: string) {
+    this.logger.debug("DB SELECT BY URL操作を開始", {
+      operation: "select_by_url",
+      url,
+      userId,
+    });
+
+    const startTime = Date.now();
+
+    try {
+      const row = await this.db
+        .select()
+        .from(schema.knowledgeItem)
+        .where(
+          and(
+            eq(schema.knowledgeItem.url, url),
+            eq(schema.knowledgeItem.userId, userId),
+          ),
+        )
+        .get();
+
+      const duration = Date.now() - startTime;
+      this.logger.debug("DB SELECT BY URL操作完了", {
+        operation: "select_by_url",
+        url,
+        userId,
+        found: !!row,
+        durationMs: duration,
+      });
+
+      if (!row) return null;
+
+      return KnowledgeItem.reconstitute({
+        id: row.id,
+        userId: row.userId,
+        url: row.url,
+        title: row.title,
+        summary: row.summary,
+        tags: row.tags,
+        createdAt: row.createdAt,
+      });
+    } catch (e) {
+      const duration = Date.now() - startTime;
+      this.logger.error("DB SELECT BY URL操作失敗", {
+        operation: "select_by_url",
+        url,
+        userId,
+        durationMs: duration,
+        error: e instanceof Error ? e.message : String(e),
+      });
+      throw e;
+    }
+  }
+
   async findAllByUserId(userId: string) {
     this.logger.debug("DB SELECT ALL BY USER操作を開始", {
       operation: "select_all",

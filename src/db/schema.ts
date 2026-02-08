@@ -62,4 +62,6 @@ export const knowledgeItem = sqliteTable("knowledge_item", {
   summary: text("summary").notNull(),
   tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default([]),
   createdAt: int("created_at", { mode: "timestamp" }).notNull(),
-});
+}, (table) => ({
+  userUrlUnique: { unique: true, name: "user_url_unique", columns: [table.userId, table.url] },
+}));
