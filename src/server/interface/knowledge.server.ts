@@ -8,6 +8,7 @@ import {
   EXTRACT_AND_SAVE_UC_TOKEN,
   LIST_KNOWLEDGE_UC_TOKEN,
   DELETE_KNOWLEDGE_UC_TOKEN,
+  SEARCH_KNOWLEDGE_UC_TOKEN,
 } from "@/server/di/tokens";
 
 export const extractAndSummarize = createServerFn({ method: "POST" })
@@ -36,4 +37,13 @@ export const deleteKnowledge = createServerFn({ method: "POST" })
     const useCase = container.resolve(DELETE_KNOWLEDGE_UC_TOKEN);
     await useCase.execute(data.id, user.id);
     return { success: true };
+  });
+
+export const searchKnowledge = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ query: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    await requireAuth(env);
+    const container = createRequestContainer(env);
+    const useCase = container.resolve(SEARCH_KNOWLEDGE_UC_TOKEN);
+    return useCase.execute(data.query);
   });

@@ -7,6 +7,7 @@ import {
   extractAndSummarize,
   listKnowledge,
   deleteKnowledge,
+  searchKnowledge,
 } from "@/server/interface/knowledge.server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ import {
   TrashIcon,
   ExternalLinkIcon,
   BookOpenIcon,
+  SearchIcon,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
@@ -58,9 +60,17 @@ interface KnowledgeItem {
   createdAt: string;
 }
 
+interface SearchResult {
+  response: string;
+  sources: { filename: string; score: number; content: string }[];
+}
+
 function KnowledgePage() {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     listKnowledge().then(setItems).catch(console.error);
@@ -89,6 +99,20 @@ function KnowledgePage() {
       toast.success("ナレッジを削除しました");
     } catch {
       toast.error("削除に失敗しました");
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const result = await searchKnowledge({ data: { query: searchQuery } });
+      setSearchResult(result);
+    } catch {
+      toast.error("検索に失敗しました");
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -173,7 +197,72 @@ function KnowledgePage() {
           </CardHeader>
         </Card>
 
-        {items.length === 0 && (
+        <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
+          <CardContent>
+            <form onSubmit={handleSearch} className='flex gap-2'>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder='ナレッジを検索...'
+                disabled={isSearching}
+                className='text-white'
+              />
+              <Button
+                type='submit'
+                disabled={isSearching || !searchQuery.trim()}
+              >
+                {isSearching ? <Spinner /> : <SearchIcon className='size-4' />}
+                検索
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {searchResult && (
+          <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
+            <CardHeader>
+              <CardTitle className='text-lg font-bold text-white'>
+                検索結果
+              </CardTitle>
+              <CardAction>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    setSearchResult(null);
+                    setSearchQuery("");
+                  }}
+                  className='text-zinc-400'
+                >
+                  クリア
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              <p className='text-zinc-300 text-sm whitespace-pre-wrap'>
+                {searchResult.response}
+              </p>
+              {searchResult.sources.length > 0 && (
+                <div className='space-y-2'>
+                  <p className='text-xs text-zinc-500'>ソース:</p>
+                  {searchResult.sources.map((source, i) => (
+                    <div
+                      key={i}
+                      className='rounded border border-zinc-700 p-2 text-xs text-zinc-400'
+                    >
+                      <span className='text-zinc-500'>{source.filename}</span>
+                      <span className='ml-2 text-zinc-600'>
+                        (スコア: {source.score.toFixed(2)})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {items.length === 0 && !searchResult && (
           <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
             <CardContent>
               <Empty>

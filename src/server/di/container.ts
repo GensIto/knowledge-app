@@ -4,18 +4,22 @@ import * as dbSchema from "@/db/schema";
 import { CloudflareContentFetcher } from "@/server/infrastructure/gateway/cloudflare-content-fetcher";
 import { CloudflareAiSummarizer } from "@/server/infrastructure/gateway/cloudflare-ai-summarizer";
 import { CloudflareContentStorage } from "@/server/infrastructure/gateway/cloudflare-content-storage";
+import { AutoRagKnowledgeSearcher } from "@/server/infrastructure/gateway/autorag-knowledge-searcher";
 import { DrizzleKnowledgeRepository } from "@/server/infrastructure/repository/knowledge-repository.impl";
 import { ExtractAndSaveUseCase } from "@/server/application/knowledge/commands/extract-and-save";
 import { ListKnowledgeUseCase } from "@/server/application/knowledge/queries/list-knowledge";
 import { DeleteKnowledgeUseCase } from "@/server/application/knowledge/commands/delete-knowledge";
+import { SearchKnowledgeUseCase } from "@/server/application/knowledge/queries/search-knowledge";
 import {
   CONTENT_FETCHER_TOKEN,
   AI_SUMMARIZER_TOKEN,
   KNOWLEDGE_REPOSITORY_TOKEN,
   CONTENT_STORAGE_TOKEN,
+  KNOWLEDGE_SEARCHER_TOKEN,
   EXTRACT_AND_SAVE_UC_TOKEN,
   LIST_KNOWLEDGE_UC_TOKEN,
   DELETE_KNOWLEDGE_UC_TOKEN,
+  SEARCH_KNOWLEDGE_UC_TOKEN,
 } from "./tokens";
 
 export function createRequestContainer(env: Env) {
@@ -51,6 +55,12 @@ export function createRequestContainer(env: Env) {
     { scope: "scoped" },
   );
 
+  container.bindFactory(
+    KNOWLEDGE_SEARCHER_TOKEN,
+    () => new AutoRagKnowledgeSearcher(env.AI),
+    { scope: "scoped" },
+  );
+
   // Use case bindings
   container.bindFactory(
     EXTRACT_AND_SAVE_UC_TOKEN,
@@ -79,6 +89,15 @@ export function createRequestContainer(env: Env) {
       new DeleteKnowledgeUseCase(
         container.resolve(KNOWLEDGE_REPOSITORY_TOKEN),
         container.resolve(CONTENT_STORAGE_TOKEN),
+      ),
+    { scope: "scoped" },
+  );
+
+  container.bindFactory(
+    SEARCH_KNOWLEDGE_UC_TOKEN,
+    () =>
+      new SearchKnowledgeUseCase(
+        container.resolve(KNOWLEDGE_SEARCHER_TOKEN),
       ),
     { scope: "scoped" },
   );
