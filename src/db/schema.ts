@@ -50,3 +50,16 @@ export const verification = sqliteTable("verification", {
   createdAt: int("createdAt", { mode: "timestamp" }),
   updatedAt: int("updatedAt", { mode: "timestamp" }),
 });
+
+// Knowledge Schema
+export const knowledgeItem = sqliteTable("knowledge_item", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default([]),
+  createdAt: int("created_at", { mode: "timestamp" }).notNull(),
+});

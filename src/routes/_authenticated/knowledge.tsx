@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { createKnowledgeSchema } from "@/shared/schema/knowledgeSchema";
-import { extractAndSummarize } from "@/lib/knowledge";
+import {
+  extractAndSummarize,
+  listKnowledge,
+  deleteKnowledge,
+} from "@/server/interface/knowledge.server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +62,10 @@ function KnowledgePage() {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  useEffect(() => {
+    listKnowledge().then(setItems).catch(console.error);
+  }, []);
+
   const form = useForm({
     defaultValues: { url: "" },
     validators: { onSubmit: createKnowledgeSchema },
@@ -74,9 +82,14 @@ function KnowledgePage() {
     },
   });
 
-  const handleDelete = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    toast.success("ナレッジを削除しました");
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteKnowledge({ data: { id } });
+      setItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success("ナレッジを削除しました");
+    } catch {
+      toast.error("削除に失敗しました");
+    }
   };
 
   return (

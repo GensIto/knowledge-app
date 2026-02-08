@@ -1,4 +1,4 @@
-import { createAuth } from "@/lib/auth";
+import { createAuth } from "@/server/infrastructure/auth/auth";
 import { createFileRoute } from "@tanstack/react-router";
 import { env } from "cloudflare:workers";
 

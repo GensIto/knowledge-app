@@ -1,0 +1,77 @@
+import { createContainer } from "ditox";
+import { drizzle } from "drizzle-orm/d1";
+import * as dbSchema from "@/db/schema";
+import { CloudflareContentFetcher } from "@/server/infrastructure/gateway/cloudflare-content-fetcher";
+import { CloudflareAiSummarizer } from "@/server/infrastructure/gateway/cloudflare-ai-summarizer";
+import { DrizzleKnowledgeRepository } from "@/server/infrastructure/repository/knowledge-repository.impl";
+import { ExtractAndSaveUseCase } from "@/server/application/knowledge/commands/extract-and-save";
+import { ListKnowledgeUseCase } from "@/server/application/knowledge/queries/list-knowledge";
+import { DeleteKnowledgeUseCase } from "@/server/application/knowledge/commands/delete-knowledge";
+import {
+  CONTENT_FETCHER_TOKEN,
+  AI_SUMMARIZER_TOKEN,
+  KNOWLEDGE_REPOSITORY_TOKEN,
+  EXTRACT_AND_SAVE_UC_TOKEN,
+  LIST_KNOWLEDGE_UC_TOKEN,
+  DELETE_KNOWLEDGE_UC_TOKEN,
+} from "./tokens";
+
+export function createRequestContainer(env: Env) {
+  const container = createContainer();
+  const db = drizzle(env.DB, { schema: dbSchema });
+
+  // Infrastructure bindings
+  container.bindFactory(
+    CONTENT_FETCHER_TOKEN,
+    () =>
+      new CloudflareContentFetcher(
+        env.CLOUDFLARE_ACCOUNT_ID,
+        env.CLOUDFLARE_BROWSER_RENDERING_TOKEN,
+      ),
+    { scope: "scoped" },
+  );
+
+  container.bindFactory(
+    AI_SUMMARIZER_TOKEN,
+    () => new CloudflareAiSummarizer(env.AI),
+    { scope: "scoped" },
+  );
+
+  container.bindFactory(
+    KNOWLEDGE_REPOSITORY_TOKEN,
+    () => new DrizzleKnowledgeRepository(db),
+    { scope: "scoped" },
+  );
+
+  // Use case bindings
+  container.bindFactory(
+    EXTRACT_AND_SAVE_UC_TOKEN,
+    () =>
+      new ExtractAndSaveUseCase(
+        container.resolve(CONTENT_FETCHER_TOKEN),
+        container.resolve(AI_SUMMARIZER_TOKEN),
+        container.resolve(KNOWLEDGE_REPOSITORY_TOKEN),
+      ),
+    { scope: "scoped" },
+  );
+
+  container.bindFactory(
+    LIST_KNOWLEDGE_UC_TOKEN,
+    () =>
+      new ListKnowledgeUseCase(
+        container.resolve(KNOWLEDGE_REPOSITORY_TOKEN),
+      ),
+    { scope: "scoped" },
+  );
+
+  container.bindFactory(
+    DELETE_KNOWLEDGE_UC_TOKEN,
+    () =>
+      new DeleteKnowledgeUseCase(
+        container.resolve(KNOWLEDGE_REPOSITORY_TOKEN),
+      ),
+    { scope: "scoped" },
+  );
+
+  return container;
+}

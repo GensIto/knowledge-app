@@ -23,15 +23,9 @@ export function createAuth(env: Env) {
     }),
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: false, // Set to true if you want email verification
+      requireEmailVerification: false,
     },
-    socialProviders: {
-      // Add social providers here if needed
-      // github: {
-      //   clientId: env.GITHUB_CLIENT_ID,
-      //   clientSecret: env.GITHUB_CLIENT_SECRET,
-      // },
-    },
+    socialProviders: {},
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins: [env.BETTER_AUTH_URL],
