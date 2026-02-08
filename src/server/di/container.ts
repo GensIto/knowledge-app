@@ -1,8 +1,7 @@
 import { createContainer } from "ditox";
-import { nanoid } from "nanoid";
 import { drizzle } from "drizzle-orm/d1";
 import * as dbSchema from "@/db/schema";
-import { createPinoLogger } from "@/server/infrastructure/logger/pino-logger";
+import { createLogger } from "@/server/infrastructure/logger/logtape-logger";
 import { CloudflareContentFetcher } from "@/server/infrastructure/gateway/cloudflare-content-fetcher";
 import { CloudflareAiSummarizer } from "@/server/infrastructure/gateway/cloudflare-ai-summarizer";
 import { CloudflareContentStorage } from "@/server/infrastructure/gateway/cloudflare-content-storage";
@@ -12,7 +11,6 @@ import { ExtractAndSaveUseCase } from "@/server/application/knowledge/commands/e
 import { ListKnowledgeUseCase } from "@/server/application/knowledge/queries/list-knowledge";
 import { DeleteKnowledgeUseCase } from "@/server/application/knowledge/commands/delete-knowledge";
 import { SearchKnowledgeUseCase } from "@/server/application/knowledge/queries/search-knowledge";
-import type { LogLevel } from "@/server/domain/knowledge/ports/logger";
 import {
   LOGGER_TOKEN,
   CONTENT_FETCHER_TOKEN,
@@ -31,15 +29,14 @@ export function createRequestContainer(env: Env) {
   const db = drizzle(env.DB, { schema: dbSchema });
 
   // リクエストIDを生成（全ログに付与される）
-  const requestId = nanoid();
+  const requestId = crypto.randomUUID();
 
   // ログレベルを環境変数から取得（デフォルト: info）
-  const logLevel = (env.LOG_LEVEL as LogLevel | undefined) ?? "info";
 
   // Infrastructure bindings
   container.bindFactory(
     LOGGER_TOKEN,
-    () => createPinoLogger({ level: logLevel, requestId }),
+    () => createLogger({ level: "info", requestId }),
     { scope: "scoped" },
   );
 
@@ -56,8 +53,7 @@ export function createRequestContainer(env: Env) {
 
   container.bindFactory(
     AI_SUMMARIZER_TOKEN,
-    () =>
-      new CloudflareAiSummarizer(env.AI, container.resolve(LOGGER_TOKEN)),
+    () => new CloudflareAiSummarizer(env.AI, container.resolve(LOGGER_TOKEN)),
     { scope: "scoped" },
   );
 

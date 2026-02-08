@@ -5,13 +5,17 @@ import type {
 import type { Logger } from "@/server/domain/knowledge/ports/logger";
 
 const AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const MAX_CONTENT_LENGTH = 12000;
 
 export class CloudflareAiSummarizer implements AiSummarizer {
   private readonly logger: Logger;
 
   constructor(ai: Ai, logger: Logger) {
     this.ai = ai;
-    this.logger = logger.child({ layer: "infrastructure", component: "CloudflareAiSummarizer" });
+    this.logger = logger.child({
+      layer: "infrastructure",
+      component: "CloudflareAiSummarizer",
+    });
   }
 
   private readonly ai: Ai;
@@ -19,7 +23,11 @@ export class CloudflareAiSummarizer implements AiSummarizer {
   async generateSummaryAndTags(content: string) {
     const systemPrompt =
       "あなたは日本語で記事を要約するアシスタントです。記事に書かれている具体的な技術・手法・結論・数値などの中身を要約してください。「〜についての記事です」のような概要説明ではなく、読者が記事を読まなくても要点がわかるような要約にしてください。";
-    const userPrompt = `以下の記事の具体的な内容を日本語で要約し、関連タグを最大5つ生成してください。\n\n${content}`;
+    const truncated =
+      content.length > MAX_CONTENT_LENGTH
+        ? content.substring(0, MAX_CONTENT_LENGTH) + "\n\n（以下省略）"
+        : content;
+    const userPrompt = `以下の記事の具体的な内容を日本語で要約し、関連タグを最大5つ生成してください。\n\n${truncated}`;
 
     this.logger.info("AI要約処理を開始", {
       model: AI_MODEL,
@@ -85,7 +93,8 @@ export class CloudflareAiSummarizer implements AiSummarizer {
               return JSON.parse(raw as string);
             } catch {
               this.logger.warn("AI レスポンスのJSON パース失敗", {
-                rawResponse: typeof raw === "string" ? raw.substring(0, 200) : String(raw),
+                rawResponse:
+                  typeof raw === "string" ? raw.substring(0, 200) : String(raw),
               });
               return null;
             }
