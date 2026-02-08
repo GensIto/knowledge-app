@@ -8,27 +8,53 @@ import {
   CardDescription,
   CardAction,
   CardContent,
-  CardFooter,
 } from "@/components/ui/card";
+import {
+  listKnowledge,
+  searchKnowledge,
+} from "@/server/interface/knowledge.server";
+import { useState } from "react";
+import { toast } from "sonner";
+import AddKnowledgeDialog from "@/components/knowledge/add-knowledge-dialog";
+import KnowledgeEmpty from "@/components/knowledge/knowledge-empty";
+import KnowledgeListItem from "@/components/knowledge/knowledge-list";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { SearchIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
+  loader: async () => {
+    const knowledgeItems = await listKnowledge();
+    return { knowledgeItems };
+  },
 });
 
 function DashboardPage() {
-  const navigate = useNavigate();
   const { data: session } = useSession();
+  const { knowledgeItems } = Route.useLoaderData();
 
-  if (!session) return null;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState<Awaited<
+    ReturnType<typeof searchKnowledge>
+  > | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSignOut = async () => {
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
     try {
-      await signOut();
-      navigate({ to: "/signin" });
-    } catch (error) {
-      console.error("Sign out error:", error);
+      const result = await searchKnowledge({ data: { query: searchQuery } });
+      setSearchResult(result);
+    } catch {
+      toast.error("検索に失敗しました");
+    } finally {
+      setIsSearching(false);
     }
   };
+
+  if (!session) return null;
 
   return (
     <div
@@ -39,109 +65,96 @@ function DashboardPage() {
       }}
     >
       <div className='max-w-4xl mx-auto space-y-4'>
-        <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
-          <CardHeader>
-            <CardTitle className='text-2xl font-bold text-white'>
-              ダッシュボード
-            </CardTitle>
-            <CardDescription>
-              ようこそ、{session.user.name || session.user.email}さん！
-            </CardDescription>
-            <CardAction>
-              <Button onClick={handleSignOut}>ログアウト</Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent></CardContent>
-          <CardFooter></CardFooter>
-        </Card>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className='max-w-4xl mx-auto space-y-4'>
           <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
             <CardHeader>
               <CardTitle className='text-2xl font-bold text-white'>
-                ユーザー情報
+                ナレッジ
               </CardTitle>
+              <CardDescription>
+                URLからコンテンツを抽出し、AIで要約・タグ付けします
+              </CardDescription>
+              <CardAction>
+                <AddKnowledgeDialog />
+              </CardAction>
             </CardHeader>
-            <CardContent>
-              <dl className='space-y-2'>
-                <div>
-                  <dt className='text-sm text-zinc-400'>名前</dt>
-                  <dd className='text-white'>
-                    {session.user.name || "未設定"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className='text-sm text-zinc-400'>メールアドレス</dt>
-                  <dd className='text-white'>{session.user.email}</dd>
-                </div>
-                <div>
-                  <dt className='text-sm text-zinc-400'>ユーザーID</dt>
-                  <dd className='text-white text-xs font-mono'>
-                    {session.user.id}
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-            <CardFooter></CardFooter>
           </Card>
+
           <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
-            <CardHeader>
-              <CardTitle className='text-2xl font-bold text-white'>
-                セッション情報
-              </CardTitle>
-            </CardHeader>
             <CardContent>
-              <dl className='space-y-2'>
-                <div>
-                  <dt className='text-sm text-zinc-400'>セッションID</dt>
-                  <dd className='text-white'>{session.session.id}</dd>
-                </div>
-                <div>
-                  <dt className='text-sm text-zinc-400'>有効期限</dt>
-                  <dd className='text-white'>
-                    {new Date(session.session.expiresAt).toLocaleString(
-                      "ja-JP",
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className='text-sm text-zinc-400'>ユーザーID</dt>
-                  <dd className='text-white text-xs font-mono'>
-                    {session.user.id}
-                  </dd>
-                </div>
-              </dl>
+              <form onSubmit={handleSearch} className='flex gap-2'>
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder='ナレッジを検索...'
+                  disabled={isSearching}
+                  className='text-white'
+                />
+                <Button
+                  type='submit'
+                  disabled={isSearching || !searchQuery.trim()}
+                >
+                  {isSearching ? (
+                    <Spinner />
+                  ) : (
+                    <SearchIcon className='size-4' />
+                  )}
+                  検索
+                </Button>
+              </form>
             </CardContent>
-            <CardFooter></CardFooter>
           </Card>
+
+          {searchResult && (
+            <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
+              <CardHeader>
+                <CardTitle className='text-lg font-bold text-white'>
+                  検索結果
+                </CardTitle>
+                <CardAction>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => {
+                      setSearchResult(null);
+                      setSearchQuery("");
+                    }}
+                    className='text-zinc-400'
+                  >
+                    クリア
+                  </Button>
+                </CardAction>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <p className='text-zinc-300 text-sm whitespace-pre-wrap'>
+                  {searchResult.response}
+                </p>
+                {searchResult.sources.length > 0 && (
+                  <div className='space-y-2'>
+                    <p className='text-xs text-zinc-500'>ソース:</p>
+                    {searchResult.sources.map((source, i) => (
+                      <div
+                        key={i}
+                        className='rounded border border-zinc-700 p-2 text-xs text-zinc-400'
+                      >
+                        <span className='text-zinc-500'>{source.filename}</span>
+                        <span className='ml-2 text-zinc-600'>
+                          (スコア: {source.score.toFixed(2)})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {knowledgeItems.length === 0 && !searchResult && <KnowledgeEmpty />}
+
+          {knowledgeItems.map((item) => (
+            <KnowledgeListItem key={item.id} item={item} />
+          ))}
         </div>
-        <Card className='backdrop-blur-md bg-black/50 shadow-xl border border-zinc-800'>
-          <CardHeader>
-            <CardTitle className='text-2xl font-bold text-white'>
-              次のステップ
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className='space-y-2 text-zinc-300'>
-              <li className='flex items-start'>
-                <span className='text-blue-400 mr-2'>•</span>
-                プロフィール設定を完了する
-              </li>
-              <li className='flex items-start'>
-                <span className='text-blue-400 mr-2'>•</span>
-                パスワードを変更する
-              </li>
-              <li className='flex items-start'>
-                <span className='text-blue-400 mr-2'>•</span>
-                二要素認証を設定する（オプション）
-              </li>
-              <li className='flex items-start'>
-                <span className='text-blue-400 mr-2'>•</span>
-                アプリケーションの機能を探索する
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter></CardFooter>
-        </Card>
       </div>
     </div>
   );

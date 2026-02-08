@@ -24,11 +24,15 @@ function SignInPage() {
     },
     onSubmit: async ({ value }) => {
       try {
-        await signIn.email({
+        const result = await signIn.email({
           email: value.email,
           password: value.password,
         });
 
+        if (result.error) {
+          toast.error(result.error.message);
+          return;
+        }
         navigate({ to: "/" });
         toast.success("ログインしました");
       } catch (error) {
