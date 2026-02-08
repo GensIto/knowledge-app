@@ -10,4 +10,8 @@ export class CloudflareContentStorage implements ContentStorage {
       },
     });
   }
+
+  async deleteMarkdown(key: string): Promise<void> {
+    await this.bucket.delete(key);
+  }
 }

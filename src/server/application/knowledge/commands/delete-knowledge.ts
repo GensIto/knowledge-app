@@ -1,9 +1,14 @@
+import type { ContentStorage } from "@/server/domain/knowledge/ports/content-storage";
 import type { KnowledgeRepository } from "@/server/domain/knowledge/repositories/knowledge-repository";
 
 export class DeleteKnowledgeUseCase {
-  constructor(private readonly knowledgeRepository: KnowledgeRepository) {}
+  constructor(
+    private readonly knowledgeRepository: KnowledgeRepository,
+    private readonly contentStorage: ContentStorage,
+  ) {}
 
   async execute(id: string, userId: string): Promise<void> {
     await this.knowledgeRepository.deleteById(id, userId);
+    await this.contentStorage.deleteMarkdown(`knowledge/${id}/content.md`);
   }
 }

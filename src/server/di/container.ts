@@ -78,6 +78,7 @@ export function createRequestContainer(env: Env) {
     () =>
       new DeleteKnowledgeUseCase(
         container.resolve(KNOWLEDGE_REPOSITORY_TOKEN),
+        container.resolve(CONTENT_STORAGE_TOKEN),
       ),
     { scope: "scoped" },
   );
