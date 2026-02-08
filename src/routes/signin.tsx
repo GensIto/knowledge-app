@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { signIn } from "@/lib/auth-client";
 import { signInSchema } from "@/shared/schema/signInSchema";
@@ -112,16 +112,6 @@ function SignInPage() {
             {form.state.isSubmitting ? "ログイン中..." : "ログイン"}
           </Button>
         </form>
-
-        <div className='mt-4 text-center text-sm text-zinc-400'>
-          アカウントをお持ちでないですか？{" "}
-          <Link
-            to='/signup'
-            className='text-blue-400 hover:text-blue-300 font-medium'
-          >
-            アカウントを作成
-          </Link>
-        </div>
       </div>
     </div>
   );
