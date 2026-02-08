@@ -4,9 +4,7 @@ import { createAuthClient } from "better-auth/react";
  * Better Auth client for React components
  * Use this client to interact with authentication in your components
  */
-export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_BETTER_AUTH_URL || "http://localhost:3000",
-});
+export const authClient = createAuthClient();
 
 /**
  * Export useful hooks from better-auth
