@@ -4,14 +4,17 @@ import type {
 } from "@/server/domain/knowledge/ports/knowledge-searcher";
 import type { Logger } from "@/server/domain/knowledge/ports/logger";
 
-const MAX_RESULTS = 10;
+const MAX_RESULTS = 5;
 
 export class AutoRagKnowledgeSearcher implements KnowledgeSearcher {
   private readonly logger: Logger;
 
   constructor(ai: Ai, logger: Logger) {
     this.ai = ai;
-    this.logger = logger.child({ layer: "infrastructure", component: "AutoRagKnowledgeSearcher" });
+    this.logger = logger.child({
+      layer: "infrastructure",
+      component: "AutoRagKnowledgeSearcher",
+    });
   }
 
   private readonly ai: Ai;
